@@ -1,16 +1,18 @@
 import { handleStatus } from "../utils/promise-helpers.js";
 import { partialize, pipe } from "../utils/operators.js";
+import { Maybe } from "../utils/maybe.js";
 
 const NOTAS_URL_API = "http://localhost:3000/notas";
 
-const getItemsFromNotas = notas => notas.$flatMap(nota => nota.itens);
-const filterItemsByCode = (code, items) => items.filter(item => item.codigo === code);
-const sumItemsValue = items => items.reduce((total, item) => total + item.valor, 0);
+const getItemsFromNotas = notasM => notasM.map(notas => notas.$flatMap(nota => nota.itens));
+const filterItemsByCode = (code, itemsM) => itemsM.map(items => items.filter(item => item.codigo === code));
+const sumItemsValue = itemsM => itemsM.map(items => items.reduce((total, item) => total + item.valor, 0));
 
 export const notasService = {
     list() {
         return fetch(NOTAS_URL_API)
             .then(handleStatus)
+            .then(notas => Maybe.of(notas))
             .catch(err => {
                 console.log(err);
 
@@ -27,5 +29,6 @@ export const notasService = {
 
     return this.list()
         .then(sumItems)
+        .then(res => res.getOrElse(0))
   }
 };
